@@ -12,6 +12,7 @@ import logging
 import logging.config
 import os.path
 import re
+import tempfile
 import subprocess
 import sys
 
@@ -20,7 +21,8 @@ from bs4 import BeautifulSoup
 
 from typing import Any, Dict  # , List, Tuple, Callable
 
-GO_DOWNLOAD_URL = 'https://go.dev/dl/'
+GO_BASE_URL = 'https://go.dev'
+GO_DOWNLOAD_URL = GO_BASE_URL + '/dl/'
 
 
 __log_level_default = logging.INFO
@@ -48,7 +50,8 @@ def get_prog_setup_or_exit_with_usage() -> Dict[str, Any]:
     log_group = parser.add_mutually_exclusive_group()
 
     parser.add_argument(
-        '--force', default=False,
+        '--force', default=False, action='store_true',
+        help='enforce installation',
     )
 
     parser.add_argument(
@@ -108,9 +111,12 @@ def run(setup: Dict[str, Any]) -> int:
     version_installed = get_installed_go_version(setup['GO_PATH'])
     logger.info('Installed: ' + version_installed)
 
-    if version_downloadable == version_installed:
+    if version_downloadable == version_installed and not setup['force']:
         logger.info('Nothing to do')
         return 0
+
+    archive = download_go_archive(url, '/tmp')
+    print('Fump:', archive)
 
     return 0
 
@@ -135,6 +141,7 @@ def get_latest_go_url_and_version() -> list[str,str]:
         if match:
             url = match.string
             version = match.group('version')
+            url = GO_BASE_URL + url
             return url, version
     else:
         raise ValueError('unable to get Linux download link')
@@ -160,8 +167,20 @@ def get_installed_go_version(path: str) -> str:
     return version
 
 
-def download_go(url: str, dest_dir: str):
-    pass
+def download_go_archive(
+        url: str, dest_dir: str, *, chunk_size: int = 8192) -> str:
+    go_basename = url.split('/')[-1]
+    download_path = os.path.join(dest_dir, go_basename)
+
+    with requests.get(url, stream=True) as r:
+        r.raise_for_status()
+
+        with open(download_path, 'wb') as f:
+            for chunk in r.iter_content(chunk_size=chunk_size):
+                f.write(chunk)
+
+    assert os.path.isfile(download_path)
+    return download_path
 
 
 def install_go(go_archiv: str, path: str):
