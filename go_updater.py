@@ -12,11 +12,11 @@ import logging
 import logging.config
 import os.path
 import re
+import shutil
+import subprocess
+import sys
 import tarfile
 import tempfile
-import subprocess
-import shutil
-import sys
 
 import requests
 from bs4 import BeautifulSoup
