@@ -12,8 +12,10 @@ import logging
 import logging.config
 import os.path
 import re
+import tarfile
 import tempfile
 import subprocess
+import shutil
 import sys
 
 import requests
@@ -109,14 +111,25 @@ def run(setup: Dict[str, Any]) -> int:
     logger.info('Downloadable: ' + version_downloadable)
 
     version_installed = get_installed_go_version(setup['GO_PATH'])
-    logger.info('Installed: ' + version_installed)
+
+    if version_installed == '':
+        logger.info('Installed: None.')
+    else:
+        logger.info('Installed: ' + version_installed)
 
     if version_downloadable == version_installed and not setup['force']:
         logger.info('Nothing to do')
         return 0
 
     archive = download_go_archive(url, '/tmp')
-    print('Fump:', archive)
+    logger.info(f'Downloaded {url}')
+
+    if os.path.isdir(setup['GO_PATH']):
+        remove_installed_go(setup['GO_PATH'])
+        logger.info(f'Removed old go installation')
+
+    install_go(archive, setup['GO_PATH'])
+    logger.info(f'Installed  new go version')
 
     return 0
 
@@ -183,8 +196,20 @@ def download_go_archive(
     return download_path
 
 
+def remove_installed_go(path: str):
+    expected_go_bin = os.path.join(path, 'bin', 'go')
+    assert os.path.isfile(expected_go_bin)
+
+    shutil.rmtree(path)
+
+
 def install_go(go_archiv: str, path: str):
-    pass
+    tf = tarfile.open(go_archiv)
+
+    sub_path = os.path.dirname(path)
+
+    tf.extractall(sub_path)
+    assert os.path.isdir(sub_path)
 
 
 if __name__ == '__main__':
