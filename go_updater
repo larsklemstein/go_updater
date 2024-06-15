@@ -1,3 +1,8 @@
 #!/bin/bash -eu
 
-exec pipenv run ${0%/*}/${0##*/}.py "$@"
+my_dir=${0%/*}
+cd $my_dir
+
+basename=${0##*/}.py
+
+pipenv run ./$basename "$@"
