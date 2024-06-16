@@ -1,0 +1,16 @@
+#!/bin/bash -eu
+
+image_name=go_updater:v01
+
+if [ $# -ne 1 ]
+then
+    echo "Need go path!" >&2
+    exit 2
+fi
+
+go_path="$1"
+go_parent_path=${go_path%/*}
+
+docker_app_path=/home/appuser/app
+
+docker run -v $go_parent_path:$docker_app_path $image_name $docker_app_path/go
