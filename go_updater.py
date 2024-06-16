@@ -111,27 +111,24 @@ def run(setup: Dict[str, Any]) -> int:
     logger.info('Downloadable: ' + version_downloadable)
 
     version_installed = get_installed_go_version(setup['GO_PATH'])
-
-    if version_installed == '':
-        logger.info('Installed: None.')
-    else:
-        logger.info('Installed: ' + version_installed)
+    log_installed_version(version_installed)
 
     if version_downloadable == version_installed and not setup['force']:
         logger.info('Nothing to do')
         return 0
 
-    archive = download_go_archive(url, '/tmp')
-    logger.info(f'Downloaded {url}')
-
-    if os.path.isdir(setup['GO_PATH']):
-        remove_installed_go(setup['GO_PATH'])
-        logger.info(f'Removed old go installation')
-
-    install_go(archive, setup['GO_PATH'])
-    logger.info(f'Installed  new go version')
+    install_go(url, setup['GO_PATH'])
 
     return 0
+
+
+def log_installed_version(version_installed: str):
+    logger = logging.getLogger(__name__)
+
+    if version_installed == '':
+        logger.info('Installed: None.')
+    else:
+        logger.info('Installed: ' + version_installed)
 
 
 def get_latest_go_url_and_version() -> list[str,str]:
@@ -203,13 +200,29 @@ def remove_installed_go(path: str):
     shutil.rmtree(path)
 
 
-def install_go(go_archiv: str, path: str):
-    tf = tarfile.open(go_archiv)
+def extract_tgz_to(archiv: str, path: str):
+    tf = tarfile.open(archiv)
 
     sub_path = os.path.dirname(path)
 
     tf.extractall(sub_path)
     assert os.path.isdir(sub_path)
+
+
+def install_go(url: str, path: str):
+    logger = logging.getLogger(__name__)
+
+    with tempfile.TemporaryDirectory() as tmpd:
+        archive = download_go_archive(url, tmpd)
+        logger.info(f'Downloaded {url}')
+
+        if os.path.isdir(path):
+            logger.info(f'Found old go installation...')
+            remove_installed_go(path)
+            logger.info(f'-> Removed.')
+
+        extract_tgz_to(archive, path)
+        logger.info(f'Installed  new go version')
 
 
 if __name__ == '__main__':
