@@ -122,7 +122,7 @@ def run(setup: Dict[str, Any]) -> int:
     return 0
 
 
-def log_installed_version(version_installed: str):
+def log_installed_version(version_installed: str) -> None:
     logger = logging.getLogger(__name__)
 
     if version_installed == '':
@@ -193,14 +193,14 @@ def download_go_archive(
     return download_path
 
 
-def remove_installed_go(path: str):
+def remove_installed_go(path: str) -> None:
     expected_go_bin = os.path.join(path, 'bin', 'go')
     assert os.path.isfile(expected_go_bin)
 
     shutil.rmtree(path)
 
 
-def extract_tgz_to(archiv: str, path: str):
+def extract_tgz_to(archiv: str, path: str) -> None:
     tf = tarfile.open(archiv)
 
     sub_path = os.path.dirname(path)
@@ -209,7 +209,7 @@ def extract_tgz_to(archiv: str, path: str):
     assert os.path.isdir(sub_path)
 
 
-def install_go(url: str, path: str):
+def install_go(url: str, path: str) -> None:
     logger = logging.getLogger(__name__)
 
     with tempfile.TemporaryDirectory() as tmpd:
