@@ -5,4 +5,10 @@ cd $my_dir
 
 basename=${0##*/}.py
 
+if test -d $HOME/.pyenv/bin
+then
+	PATH=$HOME/.pyenv/bin:$PATH
+    eval "$(pyenv init --path)"
+fi
+
 pipenv run ./$basename "$@"
